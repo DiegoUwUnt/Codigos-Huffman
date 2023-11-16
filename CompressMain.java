@@ -1,108 +1,161 @@
 import java.io.*;
+import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Scanner;
+import javax.imageio.ImageIO;
 
+/**
+ * Clase principal que maneja la interacción con el usuario y la compresión de
+ * archivos de texto, ADN e imágenes BMP.
+ * Utiliza la clase Huffman para realizar la compresión.
+ */
 public class CompressMain {
-
-    // Método principal
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         boolean exit = false;
 
-        // Ciclo principal para mostrar el menú y procesar la entrada del usuario
         while (!exit) {
-            // Mostrar opciones del menú
             System.out.println("\nSelecciona una opción:");
             System.out.println("1. Salir");
             System.out.println("2. Comprimir texto");
             System.out.println("3. Comprimir ADN");
-            System.out.println("4. Comprimir imágenes");
+            System.out.println("4. Comprimir imagen BMP");
 
-            // Leer la opción del usuario
             int choice = scanner.nextInt();
-            scanner.nextLine(); // Consume la nueva línea después del número
+            scanner.nextLine(); // Consume la nueva línea
 
-            // Procesar la opción seleccionada
             switch (choice) {
                 case 1:
-                    exit = true; // Salir del programa
+                    exit = true;
                     break;
                 case 2:
-                    compressText(scanner); // Comprimir texto
+                    compressText(scanner);
                     break;
                 case 3:
-                    compressDNA(scanner); // Comprimir ADN
+                    compressDNA(scanner);
                     break;
                 case 4:
-                    compressImage(scanner); // Comprimir imágenes
+                    compressImageBMP(scanner);
                     break;
                 default:
-                    System.out.println("Opción no válida. Por favor, intenta de nuevo.");
+                    System.out.println("Opción no válida. Intenta de nuevo.");
             }
         }
 
-        scanner.close(); // Cerrar el scanner al finalizar
+        scanner.close();
     }
 
-    // Método para comprimir texto
+    // Método para comprimir texto, tomando entrada del usuario a través de Scanner
     private static void compressText(Scanner scanner) {
-        // Solicitar nombre del archivo de texto al usuario
         System.out.println("Ingresa el nombre del archivo de texto a comprimir:");
+        String inputFile = scanner.nextLine(); // Recibe el nombre del archivo de entrada
+        System.out.println("Ingresa el nombre del archivo de salida:");
+        String outputFile = scanner.nextLine(); // Recibe el nombre del archivo de salida
+
+        try {
+            String content = new String(Files.readAllBytes(Paths.get(inputFile)));
+            // Comprime el texto
+            Huffman.CompressionResult result = Huffman.compressText(content);
+            // Guarda el resultado de la compresión en un archivo
+            saveCompressionResult(outputFile, result);
+            // Muestra los resultados de la compresión
+            displayCompressionResults(result);
+        } catch (IOException e) {
+            System.err.println("Error al leer el archivo: " + e.getMessage());
+        }
+    }
+
+    // Método para comprimir ADN, tomando entrada del usuario a través de Scanner
+    private static void compressDNA(Scanner scanner) {
+        System.out.println("Ingresa el nombre del archivo de ADN a comprimir:");
         String inputFile = scanner.nextLine();
-        // Solicitar nombre del archivo de salida
         System.out.println("Ingresa el nombre del archivo de salida:");
         String outputFile = scanner.nextLine();
 
         try {
-            // Leer el contenido del archivo
+            // Lee el archivo de entrada
             String content = new String(Files.readAllBytes(Paths.get(inputFile)));
-            // Comprimir el contenido usando Huffman
-            Huffman.CompressionResult result = Huffman.compressText(content);
+            // Comprime el ADN
+            Huffman.CompressionResult result = Huffman.compressDNA(content);
+            saveCompressionResult(outputFile, result);
+            displayCompressionResults(result);
+        } catch (IOException e) {
+            System.err.println("Error al leer el archivo: " + e.getMessage());
+        }
+    }
 
-            // Guardar el resultado en un archivo
-            saveToFile(result.compressedData, outputFile);
-            // Mostrar información de la compresión
-            System.out.println("Porcentaje de compresión: " + result.compressionPercentage + "%");
+    private static void compressImageBMP(Scanner scanner) {
+        System.out.println("Ingresa el nombre del archivo de imagen BMP a comprimir:");
+        String inputFile = scanner.nextLine();
+        System.out.println("Ingresa el nombre del archivo de salida:");
+        String outputFile = scanner.nextLine();
 
-            // Mostrar los códigos de Huffman y las frecuencias
-            System.out.println("Códigos de Huffman y frecuencias:");
-            for (Map.Entry<Character, String> entry : result.huffmanCodes.entrySet()) {
-                // Obtener el carácter y el código de Huffman
-                char character = entry.getKey();
-                // Obtener el código de Huffman
-                String code = entry.getValue();
-                // Obtener la frecuencia del carácter
-                int frequency = result.frequencies.get(character);
-                System.out
-                        .println("Carácter: " + character + ", Frecuencia: " + frequency + ", Código Huffman: " + code);
+        try {
+            // Lee el archivo de entrada
+            String imageData = readImageBMP(inputFile);
+            // Comprime la imagen
+            Huffman.CompressionResult result = Huffman.compressGrayscaleImage(imageData);
+            // Guarda el resultado de la compresión en un archivo
+            saveCompressionResult(outputFile, result);
+            // Muestra los resultados de la compresión
+            displayCompressionResults(result);
+        } catch (IOException e) {
+            System.err.println("Error al leer o escribir el archivo: " + e.getMessage());
+        }
+    }
+
+    // Guarda el resultado de la compresión en un archivo
+    private static void saveCompressionResult(String outputFile, Huffman.CompressionResult result) throws IOException {
+        // Guarda el resultado de la compresión en un archivo
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(outputFile))) {
+            // Escribe el objeto result en el archivo
+            oos.writeObject(result);
+        }
+        System.out.println("Resultado de compresión guardado en " + outputFile);
+    }
+
+    // Muestra los resultados de la compresión
+    private static void displayCompressionResults(Huffman.CompressionResult result) {
+        System.out.println("Datos comprimidos: " + result.compressedData);
+        System.out.println("Porcentaje de compresión: " + result.compressionPercentage + "%");
+        System.out.println("Códigos de Huffman y frecuencias:");
+        // Muestra los códigos de Huffman y las frecuencias de los caracteres
+        for (Map.Entry<Character, String> entry : result.huffmanCodes.entrySet()) {
+            // Obtiene el carácter, el código de Huffman y la frecuencia
+            char character = entry.getKey();
+            String code = entry.getValue();
+            int frequency = result.frequencies.get(character);
+            System.out.println("Carácter: " + character + ", Frecuencia: " + frequency + ", Código Huffman: " + code);
+        }
+    }
+
+    // Lee una imagen BMP y la convierte a una cadena de caracteres
+    private static String readImageBMP(String filename) throws IOException {
+        try {
+            // Lee la imagen BMP
+            BufferedImage image = ImageIO.read(new File(filename));
+
+            if (image == null) {
+                // No se pudo leer el archivo o el formato no es compatible
+                throw new IOException("No se pudo leer el archivo BMP o el formato no es compatible.");
+            }
+            // Convierte la imagen a escala de grises
+            StringBuilder imageData = new StringBuilder();
+            // Recorre la imagen por filas y columnas
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    int rgb = image.getRGB(x, y);
+                    int gray = (rgb >> 16) & 0xff;
+                    char grayChar = (char) gray;
+                    imageData.append(grayChar);
+                }
             }
 
-        } catch (IOException e) {
-            // Manejar errores de entrada/salida
-            System.err.println("Error al leer o escribir archivos: " + e.getMessage());
+            return imageData.toString();
+        } catch (Exception e) {
+            throw new IOException("Error al leer el archivo BMP: " + e.getMessage(), e);
         }
-    }
-
-    // Método para comprimir ADN (similar a compressText)
-    private static void compressDNA(Scanner scanner) {
-        // ... (El funcionamiento es similar al de compressText pero específico para
-        // ADN)
-    }
-
-    // Método para comprimir imágenes (no implementado en este fragmento)
-    private static void compressImage(Scanner scanner) {
-        // ... (Este método permanece igual que en el código anterior)
-    }
-
-    // Método para guardar el contenido comprimido en un archivo
-    private static void saveToFile(String content, String outputFile) throws IOException {
-        // Crear el archivo de salida
-        try (FileOutputStream fos = new FileOutputStream(outputFile);
-                ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-            oos.writeObject(content);
-        }
-        System.out.println("Archivo comprimido guardado en " + outputFile);
     }
 }
