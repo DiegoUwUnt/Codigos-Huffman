@@ -55,19 +55,28 @@ public class CompressMain {
         String outputFile = scanner.nextLine(); // Recibe el nombre del archivo de salida
 
         try {
+            // Lee el contenido del archivo
             String content = new String(Files.readAllBytes(Paths.get(inputFile)));
-            // Comprime el texto
+
+            // Comprime el texto utilizando la compresión Huffman y la subdivisión y
+            // simbolización
             Huffman.CompressionResult result = Huffman.compressText(content);
+
             // Guarda el resultado de la compresión en un archivo
             saveCompressionResult(outputFile, result);
+
             // Muestra los resultados de la compresión
             displayCompressionResults(result);
+
+            // Genera y guarda el archivo de clave ASCII
+            Huffman.generateAndSaveAsciiKey("Text/ascii_key.txt");
+            System.out.println("Archivo de clave ASCII generado: ascii_key.txt");
+
         } catch (IOException e) {
-            System.err.println("Error al leer el archivo: " + e.getMessage());
+            System.err.println("Error al leer el archivo o al generar la clave ASCII: " + e.getMessage());
         }
     }
 
-    // Método para comprimir ADN, tomando entrada del usuario a través de Scanner
     private static void compressDNA(Scanner scanner) {
         System.out.println("Ingresa el nombre del archivo de ADN a comprimir:");
         String inputFile = scanner.nextLine();
@@ -75,14 +84,20 @@ public class CompressMain {
         String outputFile = scanner.nextLine();
 
         try {
-            // Lee el archivo de entrada
             String content = new String(Files.readAllBytes(Paths.get(inputFile)));
             // Comprime el ADN
             Huffman.CompressionResult result = Huffman.compressDNA(content);
+            // Guarda el resultado de la compresión en un archivo
             saveCompressionResult(outputFile, result);
+            // Muestra los resultados de la compresión
             displayCompressionResults(result);
+
+            // Genera y guarda el archivo de clave ASCII
+            Huffman.generateAndSaveAsciiKey("ADN/ascii_key_dna.txt");
+            System.out.println("Archivo de clave ASCII generado: ascii_key_dna.txt");
+
         } catch (IOException e) {
-            System.err.println("Error al leer el archivo: " + e.getMessage());
+            System.err.println("Error al leer el archivo o al generar la clave ASCII: " + e.getMessage());
         }
     }
 
@@ -93,14 +108,18 @@ public class CompressMain {
         String outputFile = scanner.nextLine();
 
         try {
-            // Lee el archivo de entrada
             String imageData = readImageBMP(inputFile);
-            // Comprime la imagen
+            // Comprime la imagen BMP en escala de grises
             Huffman.CompressionResult result = Huffman.compressGrayscaleImage(imageData);
             // Guarda el resultado de la compresión en un archivo
             saveCompressionResult(outputFile, result);
             // Muestra los resultados de la compresión
             displayCompressionResults(result);
+
+            // Genera y guarda el archivo de clave ASCII
+            Huffman.generateAndSaveAsciiKey("Bmp/ascii_key_image.txt");
+            System.out.println("Archivo de clave ASCII generado: ascii_key_image.txt");
+
         } catch (IOException e) {
             System.err.println("Error al leer o escribir el archivo: " + e.getMessage());
         }

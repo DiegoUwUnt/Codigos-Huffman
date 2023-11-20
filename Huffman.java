@@ -1,3 +1,6 @@
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
 
@@ -101,43 +104,97 @@ public class Huffman {
         Map<Character, String> huffmanCodes = generateCodes(root);
         // Codifica el texto a partir de los códigos de Huffman
         String encodedText = encode(text, huffmanCodes);
-        return new CompressionResult(encodedText, huffmanCodes, calculateCompressionPercentage(text, encodedText),
+        // Subdivide y simboliza el texto binario
+        String symbolizedText = subdivideAndSymbolize(encodedText);
+
+        // Retorna el resultado de la compresión con el texto simbolizado
+        return new CompressionResult(symbolizedText, huffmanCodes, calculateCompressionPercentage(text, symbolizedText),
                 frequencies);
+    }
+
+    public static String subdivideAndSymbolize(String binaryText) {
+        StringBuilder symbolizedText = new StringBuilder();
+        for (int i = 0; i < binaryText.length(); i += 8) {
+            // Extrae un segmento de 8 bits
+            String byteSegment = binaryText.substring(i, Math.min(i + 8, binaryText.length()));
+
+            // Asegúrate de que el segmento es de 8 bits, agregando ceros si es necesario
+            byteSegment = String.format("%-8s", byteSegment).replace(' ', '0');
+
+            // Convierte el segmento de 8 bits en un valor de byte
+            int byteValue = Integer.parseInt(byteSegment, 2);
+
+            // Convierte el valor de byte a un carácter ASCII
+            char asciiChar = (char) byteValue;
+
+            // Agrega el carácter ASCII al texto simbolizado
+            symbolizedText.append(asciiChar);
+        }
+        return symbolizedText.toString();
+    }
+
+    // Genera y guarda el archivo de clave ASCII
+    public static void generateAndSaveAsciiKey(String filename) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
+            for (int i = 0; i < 256; i++) {
+                char asciiChar = (char) i;
+                // Convierte el valor de byte a una cadena binaria
+                String binaryString = String.format("%8s", Integer.toBinaryString(i)).replace(' ', '0');
+                writer.write("'" + asciiChar + "' = " + binaryString + "\n");
+            }
+        }
     }
 
     // Comprime datos de ADN (representados como una cadena de bases nitrogenadas)
     public static CompressionResult compressDNA(String dna) {
         // Filtra las bases nitrogenadas inválidas
         String filteredDNA = dna.replaceAll("[^ACGT]", "");
+
         // Calcula las frecuencias de las bases nitrogenadas
         Map<Character, Integer> frequencies = calculateFrequencies(filteredDNA);
+
         // Construye el árbol de Huffman
         Node root = buildTree(frequencies);
+
         // Genera los códigos de Huffman
         Map<Character, String> huffmanCodes = generateCodes(root);
+
         // Codifica el texto a partir de los códigos de Huffman
         String encodedDNA = encode(filteredDNA, huffmanCodes);
-        return new CompressionResult(encodedDNA, huffmanCodes, calculateCompressionPercentage(filteredDNA, encodedDNA),
-                frequencies);
+
+        // Subdivide y simboliza el texto binario
+        String symbolizedDNA = subdivideAndSymbolize(encodedDNA);
+
+        // Retorna el resultado de la compresión con el texto simbolizado
+        return new CompressionResult(symbolizedDNA, huffmanCodes,
+                calculateCompressionPercentage(filteredDNA, symbolizedDNA), frequencies);
     }
 
     // Comprime imágenes BMP en escala de grises
     public static CompressionResult compressGrayscaleImage(String imageData) {
         // Calcula las frecuencias de los niveles de gris
         Map<Character, Integer> frequencies = calculateFrequencies(imageData);
+
         // Construye el árbol de Huffman
         Node root = buildTree(frequencies);
+
         // Genera los códigos de Huffman
         Map<Character, String> huffmanCodes = generateCodes(root);
+
         // Codifica el texto a partir de los códigos de Huffman
         String encodedImage = encode(imageData, huffmanCodes);
-        return new CompressionResult(encodedImage, huffmanCodes,
-                calculateCompressionPercentage(imageData, encodedImage), frequencies);
+
+        // Subdivide y simboliza el texto binario
+        String symbolizedImage = subdivideAndSymbolize(encodedImage);
+
+        // Retorna el resultado de la compresión con el texto simbolizado
+        return new CompressionResult(symbolizedImage, huffmanCodes,
+                calculateCompressionPercentage(imageData, symbolizedImage), frequencies);
     }
 
     // Calcula el porcentaje de compresión
     private static double calculateCompressionPercentage(String original, String compressed) {
-        return (1 - (original.length() / (double) compressed.length())) * 100;
+        return (1 - ((double) compressed.length()) / original.length()) * 100;
     }
 
     // Clase interna para almacenar el resultado de la compresión
