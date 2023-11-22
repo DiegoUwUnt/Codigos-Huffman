@@ -44,7 +44,7 @@ public class Huffman {
         while (priorityQueue.size() > 1) {
             Node left = priorityQueue.poll();
             Node right = priorityQueue.poll();
-            Node parent = new Node(left, right); // Suponiendo que tienes este constructor
+            Node parent = new Node(left, right); // Nodo interno
             priorityQueue.add(parent);
         }
         return priorityQueue.poll();
@@ -112,24 +112,28 @@ public class Huffman {
     }
 
     public static String subdivideAndSymbolize(String binaryText) {
-        StringBuilder symbolizedText = new StringBuilder();
-        for (int i = 0; i < binaryText.length(); i += 8) {
-            String byteSegment = binaryText.substring(i, Math.min(i + 8, binaryText.length()));
-            byteSegment = String.format("%-8s", byteSegment).replace(' ', '0');
-            int byteValue = Integer.parseInt(byteSegment, 2);
-            char asciiChar = (char) byteValue;
-            symbolizedText.append(asciiChar);
+        StringBuilder symbolizedText = new StringBuilder(); // Texto simbolizado
+        for (int i = 0; i < binaryText.length(); i += 8) { // Recorre el texto binario de 8 en 8 bits
+            String byteSegment = binaryText.substring(i, Math.min(i + 8, binaryText.length())); // Subcadena de 8 bits
+            byteSegment = String.format("%-8s", byteSegment).replace(' ', '0'); // Añade ceros a la izquierda si es
+                                                                                // necesario
+            int byteValue = Integer.parseInt(byteSegment, 2); // Convierte el byte a entero
+            char asciiChar = (char) byteValue; // Convierte el entero a carácter
+            symbolizedText.append(asciiChar); // Concatena el carácter al texto simbolizado
         }
-        return symbolizedText.toString();
+        return symbolizedText.toString(); // Retorna el texto simbolizado
     }
 
     public static void generateAndSaveAsciiKey(String filename) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
             for (int i = 0; i < 256; i++) {
-                char asciiChar = (char) i;
-                String charRepresentation = getCharRepresentation(asciiChar);
-                String binaryString = String.format("%8s", Integer.toBinaryString(i)).replace(' ', '0');
-                writer.write(charRepresentation + " = " + binaryString + "\n");
+                char asciiChar = (char) i; // Convierte el entero a carácter
+                String charRepresentation = getCharRepresentation(asciiChar); // Obtiene la representación del carácter
+                String binaryString = String.format("%8s", Integer.toBinaryString(i)).replace(' ', '0'); // Convierte el
+                                                                                                         // entero a
+                                                                                                         // binario
+                writer.write(charRepresentation + " = " + binaryString + "\n"); // Escribe la representación del
+                                                                                // carácter y su valor binario
             }
         }
     }

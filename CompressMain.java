@@ -2,6 +2,7 @@ import java.io.*;
 import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Scanner;
 import javax.imageio.ImageIO;
@@ -51,8 +52,8 @@ public class CompressMain {
     private static void compressText(Scanner scanner) {
         System.out.println("Ingresa el nombre del archivo de texto a comprimir:");
         String inputFile = scanner.nextLine();
-        System.out.println("Ingresa el nombre del archivo de salida:");
-        String outputFile = scanner.nextLine();
+        String outputFile = "Text/compressed_text.txt";
+        System.out.println("El archivo se guardardo como: " + outputFile);
 
         try {
             String content = new String(Files.readAllBytes(Paths.get(inputFile)));
@@ -78,8 +79,8 @@ public class CompressMain {
     private static void compressDNA(Scanner scanner) {
         System.out.println("Ingresa el nombre del archivo de ADN a comprimir:");
         String inputFile = scanner.nextLine();
-        System.out.println("Ingresa el nombre del archivo de salida:");
-        String outputFile = scanner.nextLine();
+        String outputFile = "ADN/compressed_adn.txt";
+        System.out.println("El archivo se guardardo como: " + outputFile);
 
         try {
             String content = new String(Files.readAllBytes(Paths.get(inputFile)));
@@ -99,8 +100,8 @@ public class CompressMain {
     private static void compressImageBMP(Scanner scanner) {
         System.out.println("Ingresa el nombre del archivo de imagen BMP a comprimir:");
         String inputFile = scanner.nextLine();
-        System.out.println("Ingresa el nombre del archivo de salida:");
-        String outputFile = scanner.nextLine();
+        String outputFile = "Bmp/compressed_bmp.txt";
+        System.out.println("El archivo se guardardo como: " + outputFile);
 
         try {
             String imageData = readImageBMP(inputFile);
@@ -119,11 +120,17 @@ public class CompressMain {
 
     // Guarda el resultado de la compresión en un archivo
     private static void saveCompressionResult(String outputFile, Huffman.CompressionResult result) throws IOException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(outputFile))) {
-            oos.writeObject(result.compressedData);
-            oos.writeObject(result.frequencies); // Guardar la tabla de frecuencias
-            oos.writeDouble(result.compressionPercentage);
+        // Convierte la cadena comprimida en un array de bytes
+        byte[] compressedBytes = result.compressedData.getBytes();
+
+        // Codificar los bytes comprimidos a Base64
+        String base64Encoded = Base64.getEncoder().encodeToString(compressedBytes);
+
+        // Guardar la cadena Base64 en el archivo de salida
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+            writer.write(base64Encoded);
         }
+
         System.out.println("Resultado de compresión guardado en " + outputFile);
     }
 

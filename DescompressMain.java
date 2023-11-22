@@ -1,24 +1,71 @@
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 public class DescompressMain {
 
     public static void main(String[] args) {
-        String asciiKeyFile = "Text/ascii_key.txt";
-        String compressedFile = "out.txt";
-        String binaryOutputFile = "chi.txt";
+        Scanner scanner = new Scanner(System.in);
+        boolean exit = false;
+
+        while (!exit) {
+            System.out.println("\nSelecciona una opción:");
+            System.out.println("1. Descomprimir archivo de texto");
+            System.out.println("2. Descomprimir cadena de ADN");
+            System.out.println("3. Descomprimir imagen BMP");
+            System.out.println("4. Salir");
+
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // Consume la nueva línea
+
+            switch (choice) {
+                case 1:
+                    decompressText(scanner);
+                    break;
+                case 2:
+                    decompressDNA(scanner);
+                    break;
+                case 3:
+                    decompressImageBMP(scanner);
+                    break;
+                case 4:
+                    exit = true;
+                    break;
+                default:
+                    System.out.println("Opción no válida. Intenta de nuevo.");
+            }
+        }
+
+        scanner.close();
+    }
+
+    private static void decompressText(Scanner scanner) {
+
+        String compressedFile = "Text/compressed_text.txt"; // Archivo en Base64 o ASCII
+        String huffmanFile = "Text/huffman_text.txt"; // Archivo con frecuencias de Huffman
+        String asciiFile = "Text/ascii_key.txt"; // Archivo con clave ASCII
+        String binaryOutputFile = "Text/binary_output.txt"; // Salida de archivo binario
+        String outputFile = "Text/decompressed_output.txt"; // Archivo de salida descomprimido
 
         try {
-            Map<Character, String> asciiKey = readAsciiKey(asciiKeyFile);
-            convertCompressedToBinary(compressedFile, binaryOutputFile, asciiKey);
-            System.out.println("Texto binario guardado en: " + binaryOutputFile);
+            // Leer la clave ASCII y las frecuencias
+            Map<Character, String> asciiKey = readAsciiKey(asciiFile);
+            Map<Character, Integer> frequencies = readFrequencies(huffmanFile);
 
-            // Suponiendo que tienes un método para leer la tabla de frecuencias
-            Map<Character, Integer> frequencies = readFrequencies("Text/huffman_text.txt");
+            // Reconstruir el árbol de Huffman
             Huffman.Node root = rebuildHuffmanTree(frequencies);
-            decompressBinaryFile(binaryOutputFile, root, "decompressed_output.txt");
-            System.out.println("Texto descomprimido guardado en: decompressed_output.txt");
+
+            // Convertir el archivo comprimido a texto binario
+            convertCompressedToBinary(compressedFile, binaryOutputFile, asciiKey);
+
+            // Descomprimir el archivo binario
+            decompressBinaryFile(binaryOutputFile, root, outputFile);
+            System.out.println("Texto descomprimido guardado en: " + outputFile);
+
         } catch (IOException e) {
             System.err.println("Error: " + e.getMessage());
             e.printStackTrace();
@@ -109,6 +156,64 @@ public class DescompressMain {
             // Agrega más casos si es necesario
             default:
                 return representation.charAt(0); // Asumiendo que es un carácter común
+        }
+    }
+
+    private static void decompressDNA(Scanner scanner) {
+        // Definir los archivos de entrada y salida
+        String compressedFile = "ADN/ascii_key.txt"; // Archivo comprimido en Base64 o ASCII
+        String huffmanFile = "ADN/huffman_dna.txt"; // Archivo con frecuencias de Huffman
+        String asciiFile = "ADN/ascii_key.txt"; // Archivo con clave ASCII
+        String binaryOutputFile = "ADN/binary_dna_output.txt"; // Salida de archivo binario
+        String outputFile = "ADN/decompressed_dna.txt"; // Archivo de salida descomprimido
+
+        try {
+            // Leer la clave ASCII y las frecuencias
+            Map<Character, String> asciiKey = readAsciiKey(asciiFile);
+            Map<Character, Integer> frequencies = readFrequencies(huffmanFile);
+
+            // Reconstruir el árbol de Huffman
+            Huffman.Node root = rebuildHuffmanTree(frequencies);
+
+            // Convertir el archivo comprimido a texto binario
+            convertCompressedToBinary(compressedFile, binaryOutputFile, asciiKey);
+
+            // Descomprimir el archivo binario
+            decompressBinaryFile(binaryOutputFile, root, outputFile);
+            System.out.println("ADN descomprimido guardado en: " + outputFile);
+
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private static void decompressImageBMP(Scanner scanner) {
+        // Definir los archivos de entrada y salida
+        String compressedFile = "Bmp/ascii_key.txt"; // Archivo comprimido en Base64 o ASCII
+        String huffmanFile = "Bmp/huffman_image.txt"; // Archivo con frecuencias de Huffman
+        String asciiFile = "Bmp/ascii_key.txt"; // Archivo con clave ASCII
+        String binaryOutputFile = "Bmp/binary_image_output.txt"; // Salida de archivo binario
+        String outputFile = "Bmp/decompressed_image.bmp"; // Archivo de imagen descomprimido en formato BMP
+
+        try {
+            // Leer la clave ASCII y las frecuencias
+            Map<Character, String> asciiKey = readAsciiKey(asciiFile);
+            Map<Character, Integer> frequencies = readFrequencies(huffmanFile);
+
+            // Reconstruir el árbol de Huffman
+            Huffman.Node root = rebuildHuffmanTree(frequencies);
+
+            // Convertir el archivo comprimido a texto binario
+            convertCompressedToBinary(compressedFile, binaryOutputFile, asciiKey);
+
+            // Descomprimir el archivo binario
+            decompressBinaryFile(binaryOutputFile, root, outputFile);
+            System.out.println("Imagen BMP descomprimida guardada en: " + outputFile);
+
+        } catch (IOException e) {
+            System.err.println("Error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
