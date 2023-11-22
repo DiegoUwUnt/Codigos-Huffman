@@ -50,30 +50,28 @@ public class CompressMain {
     // Método para comprimir texto, tomando entrada del usuario a través de Scanner
     private static void compressText(Scanner scanner) {
         System.out.println("Ingresa el nombre del archivo de texto a comprimir:");
-        String inputFile = scanner.nextLine(); // Recibe el nombre del archivo de entrada
+        String inputFile = scanner.nextLine();
         System.out.println("Ingresa el nombre del archivo de salida:");
-        String outputFile = scanner.nextLine(); // Recibe el nombre del archivo de salida
+        String outputFile = scanner.nextLine();
 
         try {
-            // Lee el contenido del archivo
             String content = new String(Files.readAllBytes(Paths.get(inputFile)));
-
-            // Comprime el texto utilizando la compresión Huffman y la subdivisión y
-            // simbolización
             Huffman.CompressionResult result = Huffman.compressText(content);
 
-            // Guarda el resultado de la compresión en un archivo
+            // Construir y mostrar el árbol de Huffman
+            Huffman.Node root = Huffman.buildTree(result.frequencies);
+            System.out.println("Árbol de Huffman:");
+            Huffman.printTree(root);
+
             saveCompressionResult(outputFile, result);
-
-            // Muestra los resultados de la compresión
             displayCompressionResults(result);
-
-            // Genera y guarda el archivo de clave ASCII
+            saveHuffmanDetails("Text/huffman_text.txt", result);
             Huffman.generateAndSaveAsciiKey("Text/ascii_key.txt");
             System.out.println("Archivo de clave ASCII generado: ascii_key.txt");
+            System.out.println("Archivo del mapa de huffman generado: huffman_text.txt");
 
         } catch (IOException e) {
-            System.err.println("Error al leer el archivo o al generar la clave ASCII: " + e.getMessage());
+            System.err.println("Error al procesar el archivo de texto: " + e.getMessage());
         }
     }
 
@@ -85,19 +83,16 @@ public class CompressMain {
 
         try {
             String content = new String(Files.readAllBytes(Paths.get(inputFile)));
-            // Comprime el ADN
             Huffman.CompressionResult result = Huffman.compressDNA(content);
-            // Guarda el resultado de la compresión en un archivo
             saveCompressionResult(outputFile, result);
-            // Muestra los resultados de la compresión
             displayCompressionResults(result);
-
-            // Genera y guarda el archivo de clave ASCII
-            Huffman.generateAndSaveAsciiKey("ADN/ascii_key_dna.txt");
-            System.out.println("Archivo de clave ASCII generado: ascii_key_dna.txt");
+            saveHuffmanDetails("ADN/huffman_dna.txt", result);
+            Huffman.generateAndSaveAsciiKey("ADN/ascii_key.txt");
+            System.out.println("Archivo de clave ASCII generado: ascii_key.txt");
+            System.out.println("Archivo del mapa de huffman generado: huffman_dna.txt");
 
         } catch (IOException e) {
-            System.err.println("Error al leer el archivo o al generar la clave ASCII: " + e.getMessage());
+            System.err.println("Error al procesar el archivo de ADN: " + e.getMessage());
         }
     }
 
@@ -109,28 +104,25 @@ public class CompressMain {
 
         try {
             String imageData = readImageBMP(inputFile);
-            // Comprime la imagen BMP en escala de grises
             Huffman.CompressionResult result = Huffman.compressGrayscaleImage(imageData);
-            // Guarda el resultado de la compresión en un archivo
             saveCompressionResult(outputFile, result);
-            // Muestra los resultados de la compresión
             displayCompressionResults(result);
-
-            // Genera y guarda el archivo de clave ASCII
-            Huffman.generateAndSaveAsciiKey("Bmp/ascii_key_image.txt");
-            System.out.println("Archivo de clave ASCII generado: ascii_key_image.txt");
+            saveHuffmanDetails("Bmp/huffman_image.txt", result);
+            Huffman.generateAndSaveAsciiKey("Bmp/ascii_key.txt");
+            System.out.println("Archivo de clave ASCII generado: ascii_key.txt");
+            System.out.println("Archivo del mapa de huffman generado: huffman_image.txt");
 
         } catch (IOException e) {
-            System.err.println("Error al leer o escribir el archivo: " + e.getMessage());
+            System.err.println("Error al procesar el archivo de imagen: " + e.getMessage());
         }
     }
 
     // Guarda el resultado de la compresión en un archivo
     private static void saveCompressionResult(String outputFile, Huffman.CompressionResult result) throws IOException {
-        // Guarda el resultado de la compresión en un archivo
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(outputFile))) {
-            // Escribe el objeto result en el archivo
-            oos.writeObject(result);
+            oos.writeObject(result.compressedData);
+            oos.writeObject(result.frequencies); // Guardar la tabla de frecuencias
+            oos.writeDouble(result.compressionPercentage);
         }
         System.out.println("Resultado de compresión guardado en " + outputFile);
     }
@@ -175,6 +167,41 @@ public class CompressMain {
             return imageData.toString();
         } catch (Exception e) {
             throw new IOException("Error al leer el archivo BMP: " + e.getMessage(), e);
+        }
+    }
+
+    private static void saveHuffmanDetails(String outputFile, Huffman.CompressionResult result) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+            // Escribe la cabecera (opcional)
+            writer.write("Carácter, Frecuencia\n");
+            for (Map.Entry<Character, Integer> entry : result.frequencies.entrySet()) {
+                char character = entry.getKey();
+                int frequency = entry.getValue();
+
+                // Representa caracteres especiales como cadenas legibles
+                String charRepresentation = getCharRepresentation(character);
+
+                // Escribe el par clave-valor en el archivo
+                writer.write(charRepresentation + ", " + frequency + "\n");
+            }
+        }
+        System.out.println("Detalles de Huffman guardados en " + outputFile);
+    }
+
+    private static String getCharRepresentation(char character) {
+        // Convierte caracteres no imprimibles o especiales a una forma legible
+        switch (character) {
+            case '\n':
+                return "\\n";
+            case '\r':
+                return "\\r";
+            case '\t':
+                return "\\t";
+            case ' ':
+                return "[espacio]";
+            // Agrega más casos si es necesario
+            default:
+                return character + ""; // Convierte el carácter a una cadena
         }
     }
 }

@@ -1,1 +1,7 @@
 *.class
+*.class
+*.txt
+!ADN1.txt
+!ADN2.txt
+!ADN3.txt
+!Text.txt

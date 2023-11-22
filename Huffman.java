@@ -34,20 +34,19 @@ public class Huffman {
         }
     }
 
-    // Construye el árbol de Huffman a partir de las frecuencias de los caracteres
-    private static Node buildTree(Map<Character, Integer> frequency) {
-        // Cola de prioridad para almacenar los nodos del árbol de Huffman
+    // Este método ya existe en tu implementación actual, pero es crucial para la
+    // descompresión
+    public static Node buildTree(Map<Character, Integer> frequency) {
         PriorityQueue<Node> priorityQueue = new PriorityQueue<>();
         for (Map.Entry<Character, Integer> entry : frequency.entrySet()) {
             priorityQueue.add(new Node(entry.getKey(), entry.getValue()));
         }
-        // Construye el árbol de Huffman
         while (priorityQueue.size() > 1) {
             Node left = priorityQueue.poll();
             Node right = priorityQueue.poll();
-            priorityQueue.add(new Node(left, right));
+            Node parent = new Node(left, right); // Suponiendo que tienes este constructor
+            priorityQueue.add(parent);
         }
-
         return priorityQueue.poll();
     }
 
@@ -115,33 +114,37 @@ public class Huffman {
     public static String subdivideAndSymbolize(String binaryText) {
         StringBuilder symbolizedText = new StringBuilder();
         for (int i = 0; i < binaryText.length(); i += 8) {
-            // Extrae un segmento de 8 bits
             String byteSegment = binaryText.substring(i, Math.min(i + 8, binaryText.length()));
-
-            // Asegúrate de que el segmento es de 8 bits, agregando ceros si es necesario
             byteSegment = String.format("%-8s", byteSegment).replace(' ', '0');
-
-            // Convierte el segmento de 8 bits en un valor de byte
             int byteValue = Integer.parseInt(byteSegment, 2);
-
-            // Convierte el valor de byte a un carácter ASCII
             char asciiChar = (char) byteValue;
-
-            // Agrega el carácter ASCII al texto simbolizado
             symbolizedText.append(asciiChar);
         }
         return symbolizedText.toString();
     }
 
-    // Genera y guarda el archivo de clave ASCII
     public static void generateAndSaveAsciiKey(String filename) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
             for (int i = 0; i < 256; i++) {
                 char asciiChar = (char) i;
-                // Convierte el valor de byte a una cadena binaria
+                String charRepresentation = getCharRepresentation(asciiChar);
                 String binaryString = String.format("%8s", Integer.toBinaryString(i)).replace(' ', '0');
-                writer.write("'" + asciiChar + "' = " + binaryString + "\n");
+                writer.write(charRepresentation + " = " + binaryString + "\n");
             }
+        }
+    }
+
+    private static String getCharRepresentation(char asciiChar) {
+        switch (asciiChar) {
+            case '\n':
+                return "'\\n'";
+            case '\r':
+                return "'\\r'";
+            case '\t':
+                return "'\\t'";
+            // Agrega más casos según sea necesario
+            default:
+                return "'" + asciiChar + "'";
         }
     }
 
@@ -194,7 +197,7 @@ public class Huffman {
 
     // Calcula el porcentaje de compresión
     private static double calculateCompressionPercentage(String original, String compressed) {
-        return (1 - ((double) compressed.length()) / original.length()) * 100;
+        return ((original.length() - compressed.length()) / original.length()) * 100;
     }
 
     // Clase interna para almacenar el resultado de la compresión
@@ -216,4 +219,39 @@ public class Huffman {
             this.frequencies = frequencies;
         }
     }
+
+    public static String decode(Node root, String binaryText) {
+        StringBuilder decodedText = new StringBuilder();
+        Node current = root;
+        for (int i = 0; i < binaryText.length(); i++) {
+            current = binaryText.charAt(i) == '0' ? current.left : current.right;
+            if (current.left == null && current.right == null) {
+                decodedText.append(current.character);
+                current = root;
+            }
+        }
+        return decodedText.toString();
+    }
+
+    // Método para imprimir el árbol de Huffman
+    public static void printTree(Node root) {
+        printTreeHelper(root, "");
+    }
+
+    // Método auxiliar para imprimir el árbol
+    private static void printTreeHelper(Node node, String indent) {
+        if (node != null) {
+            if (node.left == null && node.right == null) {
+                // Nodo hoja
+                System.out.println(indent + "Char: " + node.character + " Freq: " + node.frequency);
+            } else {
+                // Nodo interno
+                System.out.println(indent + "Freq: " + node.frequency);
+                // Recorre el subárbol izquierdo y derecho
+                printTreeHelper(node.left, indent + "    ");
+                printTreeHelper(node.right, indent + "    ");
+            }
+        }
+    }
+
 }
